@@ -9,6 +9,7 @@ services:
     volumes:
       - ./semantic/backend:/app/backend
       - ./data/model.sav:/app/data/model.sav
+      - ./data/example_handle.zip:/app/data/example_handle.zip
       - ./semantic/data.json:/app/data.json
       - ./semantic/backend/tmp:/app/tmp
     command: >

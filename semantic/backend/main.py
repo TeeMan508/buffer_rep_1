@@ -39,7 +39,7 @@ mapping = {
     "contract offer": "Договор оферты",
     "statute": "Устав",
     "determination": "Решение",
-    "no_class": "Без классификации"
+    "no_class": "Невалидный файл"
 }
 
 
@@ -64,11 +64,11 @@ async def upload_files(files: list[UploadFile] = File(...), doctype: str = Form(
                    ".xlsx": parser.read_xlsx,
                    ".docx": parser.read_docx,
                    }
-    # try:
-    for file in files:
-        contents = read_config[os.path.splitext(file.filename)[1]](file)
-        data["filename"].append(file.filename)
-        data["text"].append(contents)
+    try:
+        for file in files:
+            contents = read_config[os.path.splitext(file.filename)[1]](file)
+            data["filename"].append(file.filename)
+            data["text"].append(contents)
 
     # Parse json
     json_file_path = os.path.join(os.path.dirname(__file__), "/app/data.json")
@@ -265,3 +265,11 @@ async def update_template(request: dict):
         return JSONResponse(content=data, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail={'error': str(e)})
+
+@app.post("/zip_example_handle")
+def get_zip_example_handle(request: dict):
+    path = 'data/example_handle.zip'
+    print(os.path.exists(f'{path}'))
+    if os.path.exists(f'{path}'):
+        return FileResponse(f'{path}')
+    return JSONResponse(content={"message": "not found file"}, status_code=400)
