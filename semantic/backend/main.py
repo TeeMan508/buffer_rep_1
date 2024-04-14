@@ -10,11 +10,12 @@ from fastapi import FastAPI, File, UploadFile, Form, HTTPException, APIRouter
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from .model import SemanticModel
-from .parser_file import ParserFile
+from .parser_file import ParserFile, ParserZip
 from fastapi.responses import FileResponse
 
 model_ = SemanticModel()
 parser = ParserFile()
+parser_zip = ParserZip()
 
 app = FastAPI()
 
@@ -147,43 +148,93 @@ async def handle_example(request: dict):
 
     return JSONResponse(content=res, status_code=200)
 
+def read_doc_zip(paths: list[str]) -> dict:
+    data = {'filename': [], 'text': []}
+    read_config = {".txt": parser_zip.read_txt,
+                   ".rtf": parser_zip.read_rtf,
+                   ".pdf": parser_zip.read_pdf,
+                   ".xlsx": parser_zip.read_xlsx,
+                   ".docx": parser_zip.read_docx,
+                   }
 
-# @app.post("/upload_zip")
-# async def upload_zip(file: UploadFile = File(...)):
-#     async with aiofiles.open(f'/app/tmp/{file.filename}', 'wb') as out_file:
-#         while content := await file.read(1024):  # async read chunk
-#             await out_file.write(content)  # async write chunk
-#
-#     archive_name = os.path.splitext(file.filename)[0]
-#
-#     os.mkdir(f"/app/tmp/{archive_name}")
-#     with zipfile.ZipFile(f'/app/tmp/{file.filename}') as raw_zipfile:
-#         raw_zipfile.extractall(path=f"/app/tmp/{archive_name}")
-#
-#     filenames = []
-#     for filename in os.listdir(f"/app/tmp/{archive_name}"):
-#         filenames.append("/app/tmp/" + filename)
-#     print(filenames) # <-- ТУТ ВСЕ ПОЛНЫЕ ПУТИ К ФАЙЛАМ
-#     # FUNCTION TO READ FILES
-#     # FUNCTION TO PASS FILES TO MODEL
-#     # FUNCTION TO CREATE RESPONSE
-#     try:
-#         os.remove(f"/app/tmp/{file.filename}")
-#         shutil.rmtree(f"/app/tmp/{archive_name}")
-#     except (FileNotFoundError, ):
-#         pass
-#     return JSONResponse(content={}, status_code=200)
+    for path in paths:
+        contents = read_config[os.path.splitext(path)[1]](path)
+        data["filename"].append(path)
+        data["text"].append(contents)
+    preds = model_.predict(pd.DataFrame(data))
+    return preds
+
+
+def create_folders_and_sort_files(folders_dict, folder_name):
+    for filename, prediction_classname in folders_dict.items():
+        if not os.path.exists(folder_name + f"/{prediction_classname}/"):
+            os.mkdir(folder_name + prediction_classname)
+            destination_path = os.path.join(folder_name + f"/{prediction_classname}/", os.path.basename(filename))
+            shutil.copy(filename, destination_path)
+
+
+def create_zip_response():
+    """
+    Создает ZIP-архив из папки, включая все файлы внутри.
+
+    :param folder_path: Путь к папке, которую нужно запаковать.
+    :param output_zip_path: Путь к выходному ZIP-файлу.
+    """
+    try:
+        if os.path.exists("/app/tmp/result.zip"):
+            os.remove("/app/tmp/result.zip")
+
+        with zipfile.ZipFile('/app/tmp/result.zip', 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, _, files in os.walk('/app/tmp'):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    # Добавляем файл в архив с сохранением относительной структуры папок
+                    zipf.write(file_path, os.path.relpath('/app/tmp/', '/app/tmp'))
+        print(f"Папка успешно запакована в /app/tmp/")
+    except Exception as e:
+        print(f"Ошибка при создании ZIP-архива: {e}")
+    return FileResponse(r'/app/tmp/result.zip')
 
 @app.post("/upload_zip")
 async def upload_zip(file: UploadFile = File(...)):
-    if not file.filename.endswith(".zip"):
-        raise HTTPException(status_code=400, detail="Uploaded file must be a .zip file")
+    async with aiofiles.open(f'/app/tmp/{file.filename}', 'wb') as out_file:
+        while content := await file.read(1024):  # async read chunk
+            await out_file.write(content)  # async write chunk
 
-    file_path = os.path.join("/app", file.filename)
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    archive_name = os.path.splitext(file.filename)[0]
 
-    return FileResponse(file_path)
+    os.mkdir(f"/app/tmp/{archive_name}")
+    print(os.listdir("/app/tmp/"))
+    print(f"/app/tmp/{file.filename}")
+    with zipfile.ZipFile(f'/app/tmp/{file.filename}') as raw_zipfile:
+        raw_zipfile.extractall(path=f"/app/tmp/{archive_name}")
+
+    filenames = []
+    for filename in os.listdir(f"/app/tmp/{archive_name}"):
+        filenames.append(f"/app/tmp/{archive_name}/" + filename)
+    print(filenames)
+    path_to_mapping = read_doc_zip(filenames)
+    print(path_to_mapping)
+    create_folders_and_sort_files(path_to_mapping, f"/app/tmp/{archive_name}/")
+    response = create_zip_response()  # FUNCTION TO CREATE RESPONSE
+
+    try:
+        os.remove(f"/app/tmp/{file.filename}")
+        shutil.rmtree(f"/app/tmp/{archive_name}")
+    except (FileNotFoundError, ):
+        pass
+    return response
+
+# @app.post("/upload_zip")
+# async def upload_zip(file: UploadFile = File(...)):
+#     if not file.filename.endswith(".zip"):
+#         raise HTTPException(status_code=400, detail="Uploaded file must be a .zip file")
+#
+#     file_path = os.path.join("/app", file.filename)
+#     with open(file_path, "wb") as buffer:
+#         shutil.copyfileobj(file.file, buffer)
+#
+#     return FileResponse(file_path)
 
 @app.post("/update_template")
 async def update_template(request: dict):
