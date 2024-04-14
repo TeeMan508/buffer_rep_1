@@ -216,3 +216,10 @@ async def update_template(request: dict):
         return JSONResponse(content=data, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail={'error': str(e)})
+
+@app.get("/zip_example_handle")
+def get_zip_example_handle():
+    path = 'data/example_handle.zip'
+    if os.path.exists(f'{path}'):
+        return FileResponse(f'{path}')
+    return JSONResponse(content={"message": "not found file"}, status_code=500)
