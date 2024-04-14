@@ -82,7 +82,12 @@ const ZipUploadComponent = ({ docsNumber, openModal }) => {
             const url = window.URL.createObjectURL(outputFile);
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', uploadedFile.name);
+            if (uploadedFile) {
+                link.setAttribute('download', uploadedFile.name);
+            }
+            else{
+                link.setAttribute('download', 'processed.zip');
+            }
             document.body.appendChild(link);
             link.click();
             link.parentNode.removeChild(link);
