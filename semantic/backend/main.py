@@ -189,7 +189,7 @@ def create_zip_response(dir_name):
                 for file in files:
                     file_path = os.path.join(root, file)
                     # Добавляем файл в архив с сохранением относительной структуры папок
-                    zipf.write(file_path, os.path.relpath('/app/tmp/', '/app/tmp'))
+                    zipf.write(file_path, os.path.relpath(file_path, '/app/tmp'))
         print(f"Папка успешно запакована в /app/tmp/")
     except Exception as e:
         print(f"Ошибка при создании ZIP-архива: {e}")
