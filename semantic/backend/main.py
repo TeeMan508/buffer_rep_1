@@ -173,7 +173,7 @@ def create_folders_and_sort_files(folders_dict, folder_name):
             shutil.copy(filename, destination_path)
 
 
-def create_zip_response():
+def create_zip_response(dir_name):
     """
     Создает ZIP-архив из папки, включая все файлы внутри.
 
@@ -204,19 +204,16 @@ async def upload_zip(file: UploadFile = File(...)):
     archive_name = os.path.splitext(file.filename)[0]
 
     os.mkdir(f"/app/tmp/{archive_name}")
-    print(os.listdir("/app/tmp/"))
-    print(f"/app/tmp/{file.filename}")
     with zipfile.ZipFile(f'/app/tmp/{file.filename}') as raw_zipfile:
         raw_zipfile.extractall(path=f"/app/tmp/{archive_name}")
 
     filenames = []
     for filename in os.listdir(f"/app/tmp/{archive_name}"):
         filenames.append(f"/app/tmp/{archive_name}/" + filename)
-    print(filenames)
+
     path_to_mapping = read_doc_zip(filenames)
-    print(path_to_mapping)
     create_folders_and_sort_files(path_to_mapping, f"/app/tmp/{archive_name}/")
-    response = create_zip_response()  # FUNCTION TO CREATE RESPONSE
+    response = create_zip_response(archive_name)  # FUNCTION TO CREATE RESPONSE
 
     try:
         os.remove(f"/app/tmp/{file.filename}")
