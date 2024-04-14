@@ -64,7 +64,7 @@ async def upload_files(files: list[UploadFile] = File(...), doctype: str = Form(
                    }
     try:
         for file in files:
-            contents = await read_config[os.path.splitext(file.filename)[1]](file)
+            contents = read_config[os.path.splitext(file.filename)[1]](file)
             data["filename"].append(file.filename)
             data["text"].append(contents)
 
