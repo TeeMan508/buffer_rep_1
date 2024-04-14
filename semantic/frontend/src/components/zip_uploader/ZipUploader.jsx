@@ -55,8 +55,10 @@ const ZipUploadComponent = ({ docsNumber, openModal }) => {
     const handleExample = async () => {
         const requestData = {example: 'first'};
         setLoading(true);
+        console.log(requestData);
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND}/upload_example_zip`, {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND}/zip_example_handle`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json' // Specify content type as JSON
                 },
@@ -80,7 +82,12 @@ const ZipUploadComponent = ({ docsNumber, openModal }) => {
             const url = window.URL.createObjectURL(outputFile);
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', uploadedFile.name);
+            if (uploadedFile) {
+                link.setAttribute('download', `processed_${uploadedFile.name}`);
+            }
+            else{
+                link.setAttribute('download', 'processed.zip');
+            }
             document.body.appendChild(link);
             link.click();
             link.parentNode.removeChild(link);
