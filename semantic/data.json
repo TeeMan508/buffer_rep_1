@@ -1,0 +1,22 @@
+{
+  "bank": {
+    "name": "Банк (открытие ИП) — 3 файла",
+    "docs_number": 3,
+    "categories": ["application", "determination", "invoice"]
+  },
+  "zags": {
+    "name": "Банк (открытие счета) — 1 файл",
+    "docs_number": 1,
+    "categories": ["application"]
+  },
+  "avto": {
+    "name": "Банк (оформление кредита) — 3 файла",
+    "docs_number": 3,
+    "categories": ["proxy", "arrangement", "bill"]
+  },
+  "zakon": {
+    "name": "Банк (оформление ипотеки) — 4 файла",
+    "docs_number": 4,
+    "categories": ["determination", "statute", "act", "order"]
+  }
+}
