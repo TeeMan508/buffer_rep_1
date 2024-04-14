@@ -55,8 +55,10 @@ const ZipUploadComponent = ({ docsNumber, openModal }) => {
     const handleExample = async () => {
         const requestData = {example: 'first'};
         setLoading(true);
+        console.log(requestData);
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND}/upload_example_zip`, {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND}/zip_example_handle`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json' // Specify content type as JSON
                 },
@@ -122,7 +124,7 @@ const ZipUploadComponent = ({ docsNumber, openModal }) => {
                             </button>
                         </div>
                     )}
-                    {/*<button className="btn btn-success modal-button" onClick={handleExample}>Пример запроса</button>*/}
+                    <button className="btn btn-success modal-button" onClick={handleExample}>Пример запроса</button>
 
                 </div>
                 {loading && (
