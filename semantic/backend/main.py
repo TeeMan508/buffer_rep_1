@@ -38,6 +38,7 @@ mapping = {
     "contract offer": "Договор оферты",
     "statute": "Устав",
     "determination": "Решение",
+    "no_class": "Невалидный файл"
 }
 
 

@@ -17,6 +17,7 @@ const FileUploader = (props) => {
 
 
     const checkFiles = (files) => {
+        const maxFileSize = 5 * 1024 * 1024; // 20MB in bytes
         if (!(files && files.length)) {
             alert("Загрузите файлы")
             return false;
@@ -28,6 +29,11 @@ const FileUploader = (props) => {
         }
 
         for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.size > maxFileSize) {
+                alert(`File ${file.name} exceeds the maximum file size of 5MB`);
+                return false; // Skip appending this file
+            }
             const extension = files[i].name.split('.').pop().toLowerCase();
             if (!allowedFormats.includes(extension)) {
                 alert("Неверный формат файла")

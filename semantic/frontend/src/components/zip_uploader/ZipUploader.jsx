@@ -7,6 +7,7 @@ const ZipUploadComponent = ({ docsNumber, openModal }) => {
     const [filename, setFilename] = useState("");
     const [loading, setLoading] = useState(false);
 
+    const maxFileSize = 10 * 1024 * 1024;
     const handleClick = () => {
         fileInputRef.current.click();
     };
@@ -22,7 +23,12 @@ const ZipUploadComponent = ({ docsNumber, openModal }) => {
     };
 
     const handleFileChange = (files) => {
-        console.log('set_files', files[0]);
+        const file = files[0];
+        if (file.size > maxFileSize) {
+            alert(`File ${file.name} exceeds the maximum file size of 20MB`);
+            return; // Skip appending this file
+        }
+
         setUploadedFile(files[0]);
         setFilename(files[0].name); // Set the filename
     }
