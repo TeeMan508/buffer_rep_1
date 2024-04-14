@@ -70,49 +70,49 @@ async def upload_files(files: list[UploadFile] = File(...), doctype: str = Form(
             data["filename"].append(file.filename)
             data["text"].append(contents)
 
-    # Parse json
-    json_file_path = os.path.join(os.path.dirname(__file__), "/app/data.json")
-    with open(json_file_path, "r", encoding="utf-8") as file:
-        json_file = json.load(file)
-    cats = json_file[doctype]['categories']
-    cats = {cat: 1 for cat in cats}
+        # Parse json
+        json_file_path = os.path.join(os.path.dirname(__file__), "/app/data.json")
+        with open(json_file_path, "r", encoding="utf-8") as file:
+            json_file = json.load(file)
+        cats = json_file[doctype]['categories']
+        cats = {cat: 1 for cat in cats}
 
-    df_data = pd.DataFrame(data)
-    res_data = model_.predict(df_data)
+        df_data = pd.DataFrame(data)
+        res_data = model_.predict(df_data)
 
-    total_status = True
-    for filename, category in res_data.items():
-        if category not in cats:
-            resp["files"][filename] = {
-                "category": mapping[category],
-                "valid_type": f"Неожиданная категория, ожидалась категория из списка: "
-                              f"[{', '.join([mapping[i] for i in cats.keys()])}]",
-            }
-            total_status = False
-        elif cats[category] == 1:
-            resp["files"][filename] = {
-                "category": mapping[category],
-                "valid_type": "Правильный документ",
-            }
-            cats[category] -= 1
+        total_status = True
+        for filename, category in res_data.items():
+            if category not in cats:
+                resp["files"][filename] = {
+                    "category": mapping[category],
+                    "valid_type": f"Неожиданная категория, ожидалась категория из списка: "
+                                  f"[{', '.join([mapping[i] for i in cats.keys()])}]",
+                }
+                total_status = False
+            elif cats[category] == 1:
+                resp["files"][filename] = {
+                    "category": mapping[category],
+                    "valid_type": "Правильный документ",
+                }
+                cats[category] -= 1
+            else:
+                resp["files"][filename] = {
+                    "category": mapping[category],
+                    "valid_type": "Лишний документ",
+                }
+                total_status = False
+
+        # resp : {'files': {'1.txt': {'category': 'application'}}}
+
+        if total_status is True:
+            resp["status"] = "ok"
         else:
-            resp["files"][filename] = {
-                "category": mapping[category],
-                "valid_type": "Лишний документ",
-            }
-            total_status = False
+            resp["status"] = "bad"
 
-    # resp : {'files': {'1.txt': {'category': 'application'}}}
-
-    if total_status is True:
-        resp["status"] = "ok"
-    else:
-        resp["status"] = "bad"
-
-    return JSONResponse(content=resp, status_code=200)
-    # except Exception as e:
-    #     print(e)
-    #     return JSONResponse(content={"message": "Failed to upload files", "error": str(e)}, status_code=500)
+        return JSONResponse(content=resp, status_code=200)
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"message": "Failed to upload files", "error": str(e)}, status_code=500)
 
 
 @app.post("/handle_example")

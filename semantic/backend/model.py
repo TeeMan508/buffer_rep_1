@@ -141,7 +141,7 @@ class SemanticModel:
         :return: list[class_]
 
         """
-#         print(f"{test_df['text'].values.tolist()=}")
+        print(f"{test_df['text'].values.tolist()=}")
         filenames = test_df['filename'].values.tolist()
         try:
             test_df['text'] = test_df['text'].apply(self._data_processing)
